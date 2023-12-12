@@ -1,3 +1,10 @@
+#test data
+testdata/
+src/ReadyDev.py
+
+#GCP Key
+key/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
