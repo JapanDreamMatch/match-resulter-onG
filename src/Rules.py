@@ -52,6 +52,9 @@ class Rule:
       self.restricted_ships.pop()
 
   def is_confirmed(self, ship: Ship):
+    if ship.banned:
+      return False
+
     if self.b_limit != LIMITLESS and self.shipCount >= self.b_limit and ship.is_B_ship():
       return False
     if self.arp_limit != LIMITLESS and self.shipCount >= self.arp_limit and ship.is_ARP_ship():
@@ -62,7 +65,7 @@ class Rule:
       return False
     if ship.country in self.restricted_countys and self.shipCount >= self.restricted_limit:
       return False
-    if ship.name in self.restricted_ships and self.shipCount >= self.restricted_limit:
+    if ship.is_names(self.restricted_ships) and self.shipCount >= self.restricted_limit:
       return False
     
     self.shipCount += 1

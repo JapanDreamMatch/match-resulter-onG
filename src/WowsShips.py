@@ -21,7 +21,7 @@ class WowsShips:
     for type in Rules.SHIPTYPES:
       worksheets = self.book.worksheets(type)
       for row in worksheets.get_all_values():
-        self.ships.append(Ship(row[0], row[1], type, row[3]))
+        self.ships.append(Ship(row[0], row[1], type, row[3], row[4]))
 
 
   # shipsの中から、unture_ship_namesに含まれる艦艇名を検出して返す
