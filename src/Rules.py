@@ -6,8 +6,8 @@ SHIPTYPES = ['dd', 'cr', 'bb', 'cv', 'sb']
 
 class Rules:
   def __init__(self, workbook):
-    self.countrys = workbook.worksheets("country").col_values(1)
-    self.rules = [Rule(row[0], self.countrys) for row in workbook.worksheets("rules").get_all_values()]
+    self.countrys = workbook.worksheet("country").col_values(1)
+    self.rules = [Rule(row[0], self.countrys) for row in workbook.worksheet("rules").get_all_values()]
 
   def is_confirmed(self, ship):
     for rule in self.rules:
@@ -37,10 +37,10 @@ class Rule:
     elif '*CLR' in split_literal[0]:
       self.clr_limit = limit
 
-    elif exist_countrys in split_literal[0]:
+    elif any(country in split_literal[0] for country in exist_countrys):
       for country in split_literal:
         if(country in exist_countrys):
-          self.restricted_county.append(country)
+          self.restricted_countys.append(country)
 
     elif any(TYPE in split_literal[0] for TYPE in SHIPTYPES):
       for type in split_literal:
