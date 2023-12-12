@@ -4,16 +4,20 @@ from VisionOCR import VisionOCR
 import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import WowsShips
+import Rules
 
 class Ready(VisionOCR):
-  def __init__(self, image_url, credentials_json, member_sheet_url):
+  def __init__(self, image_url, credentials_json, member_sheet_url, ships_sheet_url):
     super().__init__(image_url, credentials_json)
     self.member_sheet_url = member_sheet_url
     self.ocr_members = []
     self.team_members = []
-    self.ships = []
+    self.ocr_ships = []
     self.team_name = ''
     self.book = None
+    self.wows_ships = WowsShips.WowsShips(credentials_json, ships_sheet_url)
+    self.rules = Rules.Rules(self.wows_ships.book)
     self.detect_member()
     self.detect_ship()
     
@@ -27,7 +31,7 @@ class Ready(VisionOCR):
     lines = [line.replace('VIX ', '').replace('X ', '') for line in lines]
     
     # 結果をshipsへ格納
-    self.ships = lines
+    self.ocr_ships = self.wows_ships.detect_ships(lines)
 
 
 
@@ -86,6 +90,7 @@ class Ready(VisionOCR):
     self.ocr_members = ocr_members
 
 
+
   # チームメンバーの出場状況を記録、知らないメンバーを返す 
   def player_participation(self):
     # Google SpreadSheet APIの認証情報を使用してクライアントを設定
@@ -101,16 +106,19 @@ class Ready(VisionOCR):
         ws.update_cell(i+1, 2, '出場')
         unknown_members.remove(row[0])
 
-
     return unknown_members
+  
 
+  # 艦艇がルールに沿っているか検証、不適切な艦艇を返す
+  def ships_participation(self):
+    unknown_ships = []
+    for ship in self.ocr_ships:
+      if not self.rules.is_confirmed(ship):
+        unknown_ships.append(ship)
+    return unknown_ships
 
-
-  def detect_member_from_reply(self, reply_text):
-    # メンバーリストと艦艇リストの間のテキストを抽出
-    member_list_text = reply_text.split("艦艇リスト:")[0]
-
+  def detect_from_reply(self, reply_text):
     # メンバーリストの名前を抽出し、リストに格納
-    member_names = [name.strip() for name in member_list_text.split("メンバーリスト:")[1].split("\n") if name.strip()]
-
-    print(member_names)
+    self.ocr_members = [name.strip() for name in reply_text.split("艦艇リスト:")[0].split("メンバーリスト:")[1].split("\n") if name.strip()]
+    # 艦艇リストの名前を抽出し、リストに格納
+    self.ocr_ships = [name.strip() for name in reply_text.split("艦艇リスト:")[1].split("\n") if name.strip()]

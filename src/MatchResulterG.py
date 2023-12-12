@@ -13,6 +13,7 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GOOGLE_CREDENTIALS_JSON = os.getenv('GOOGLE_CREDENTIALS_JSON')
 MEMBER_SPREADSHEET_URL = os.getenv('MEMBERS_SPREADSHEET_URL')
+SHIPS_SHEET_URL = os.getenv('SHIPS_SHEET_URL')
 CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
 
 # Botのクライアントを作成
@@ -46,15 +47,27 @@ async def on_message(message):
   # 承認待ちの場合は処理をスキップ
   if message.author in awaiting:
     return
+  
+  # 承認待ちをリセット
+  if message.content == '!matchresulter flush':
+    awaiting.clear()
+    await message.channel.send('承認待ちをリセットしました。')
+    return
+  
+  # debug用
+  if message.content == '!matchresulter debug':
+    msg = ""
+    await message.channel.send(msg)
+    return
 
   # 画像が添付されているか確認
   if any(attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')) for attachment in message.attachments):
     # Readyクラスのインスタンスを作成
-    ready_info = Ready(message.attachments[0].url, GOOGLE_CREDENTIALS_JSON, MEMBER_SPREADSHEET_URL)
+    ready_info = Ready(message.attachments[0].url, GOOGLE_CREDENTIALS_JSON, MEMBER_SPREADSHEET_URL, SHIPS_SHEET_URL)
     
     # メンバーリストと艦艇リストを整形してメッセージとして送信
     member_list = '\n'.join(ready_info.ocr_members)
-    ship_list = '\n'.join(ready_info.ships)
+    ship_list = '\n'.join(ready_info.ocr_ships)
     confirmation_message = str(f"メンバーリスト:\n{member_list}\n\n艦艇リスト:\n{ship_list}\n\nこのリストを修正してください。修正が完了したら、'修正完了'と返信してください。"
       + "\n修正する場合は内容をコピー&ペーストして内容を修正してください。\n1分経過で自動承認とします。")
     
@@ -87,9 +100,12 @@ async def on_message(message):
 
     #Spreadsheetに記述
     unknown_memebers = ready_info.player_participation()
-    await message.channel.send(f'選手を記録しました。')
+    unknown_ships = ready_info.ships_participation()
+    await user_response.reply(f'選手を記録しました。')
     if unknown_memebers:
       await message.channel.send(f'以下のメンバーは登録されていません。再確認をお願いします。\n{unknown_memebers}')
+    if unknown_ships:
+      await user_response.reply(f'以下の艦艇は登録されていません。再確認をお願いします。\n{unknown_ships}')
 
 
 
