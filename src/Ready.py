@@ -6,13 +6,14 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 class Ready(VisionOCR):
-  def __init__(self, image_url, credentials_json, sheet_url):
+  def __init__(self, image_url, credentials_json, member_sheet_url):
     super().__init__(image_url, credentials_json)
-    self.sheet_url = sheet_url
-    self.members = []
+    self.member_sheet_url = member_sheet_url
+    self.ocr_members = []
     self.team_members = []
     self.ships = []
     self.team_name = ''
+    self.book = None
     self.detect_member()
     self.detect_ship()
     
@@ -53,8 +54,8 @@ class Ready(VisionOCR):
     client = gspread.authorize(credentials)
 
     # 各チームの登録メンバーリストを取得
-    book = client.open_by_url(self.sheet_url)
-    worksheets = book.worksheets()
+    self.book = client.open_by_url(self.member_sheet_url)
+    worksheets = self.book.worksheets()
 
     # 一致するメンバーが最も多いチームを特定
     max_matches = 0
@@ -70,27 +71,38 @@ class Ready(VisionOCR):
     # チーム名を格納
     self.team_name = best_team
 
-    # 出場した選手を記録
-    ws = book.worksheet(self.team_name)  # 最適なチームのワークシートを取得
-    for i, member in enumerate(self.team_members, start=1):  # メンバーリストをループ（start=1はスプレッドシートが1から始まるため
+    # 出場した選手の「...」を補正
+    for name in self.book.worksheet(self.team_name).col_values(1):
       for ocr_member in ocr_members:
-        if ocr_member.replace(".", "") in member:
-          self.members.append(member)
+        if ocr_member.replace(".", "") in name:
+          ocr_members.append(name)
+          ocr_members.remove(ocr_member)
+
+    # 運営メンバーを除く
+    for op in self.book.worksheet('RoomOperator').col_values(1):
+      if op in ocr_members:
+        ocr_members.remove(op)
+
+    self.ocr_members = ocr_members
 
 
-
+  # チームメンバーの出場状況を記録、知らないメンバーを返す 
   def player_participation(self):
     # Google SpreadSheet APIの認証情報を使用してクライアントを設定
     scope = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
     credentials = ServiceAccountCredentials.from_json_keyfile_name(self.credentials_json, scope)
     client = gspread.authorize(credentials)
-    book = client.open_by_url(self.sheet_url)
-    ws = book.worksheet(self.team_name)  
+    book = client.open_by_url(self.member_sheet_url)
+    ws = book.worksheet(self.team_name)
 
-    for i, member in enumerate(self.team_members, start=1):  # メンバーリストをループ（start=1はスプレッドシートが1から始まるため
-      for ocr_member in self.members:
-        if ocr_member in member:
-          ws.update_cell(i, 2, '出場')  # 出場メンバーの場合右側に'出場'を記入
+    unknown_members = self.ocr_members.copy()
+    for i, row in enumerate(ws.get_all_values()):
+      if row[0] in self.ocr_members:
+        ws.update_cell(i+1, 2, '出場')
+        unknown_members.remove(row[0])
+
+
+    return unknown_members
 
 
 

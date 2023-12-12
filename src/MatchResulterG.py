@@ -12,7 +12,7 @@ load_dotenv()
 # 環境変数を取得
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 GOOGLE_CREDENTIALS_JSON = os.getenv('GOOGLE_CREDENTIALS_JSON')
-GOOGLE_SPREADSHEET_URL = os.getenv('GOOGLE_SPREADSHEET_URL')
+MEMBER_SPREADSHEET_URL = os.getenv('MEMBERS_SPREADSHEET_URL')
 CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
 
 # Botのクライアントを作成
@@ -20,6 +20,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
+
+awaiting = []
 
 @client.event
 async def on_ready():
@@ -40,20 +42,25 @@ async def on_message(message):
   # CHANNEL_IDのチャンネル以外、または添付ファイルがない場合は処理をスキップ
   if message.channel.id != CHANNEL_ID or len(message.attachments) <= 0:
     return
+  
+  # 承認待ちの場合は処理をスキップ
+  if message.author in awaiting:
+    return
 
   # 画像が添付されているか確認
   if any(attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')) for attachment in message.attachments):
     # Readyクラスのインスタンスを作成
-    ready_info = Ready(message.attachments[0].url, GOOGLE_CREDENTIALS_JSON, GOOGLE_SPREADSHEET_URL)
+    ready_info = Ready(message.attachments[0].url, GOOGLE_CREDENTIALS_JSON, MEMBER_SPREADSHEET_URL)
     
     # メンバーリストと艦艇リストを整形してメッセージとして送信
-    member_list = '\n'.join(ready_info.members)
+    member_list = '\n'.join(ready_info.ocr_members)
     ship_list = '\n'.join(ready_info.ships)
     confirmation_message = str(f"メンバーリスト:\n{member_list}\n\n艦艇リスト:\n{ship_list}\n\nこのリストを修正してください。修正が完了したら、'修正完了'と返信してください。"
       + "\n修正する場合は内容をコピー&ペーストして内容を修正してください。\n1分経過で自動承認とします。")
     
     # 返信メッセージを送信
-    confirmation_msg = await message.channel.send(confirmation_message)
+    confirmation_msg = await message.reply(confirmation_message)
+    awaiting.append(message.author)
     
     # ユーザーからの応答を待つ
     def check(m):
@@ -75,6 +82,14 @@ async def on_message(message):
 
     except asyncio.TimeoutError:
       await confirmation_msg.reply('タイムアウトしましたので自動承認とします。')
+
+    awaiting.remove(message.author)
+
+    #Spreadsheetに記述
+    unknown_memebers = ready_info.player_participation()
+    await message.channel.send(f'選手を記録しました。')
+    if unknown_memebers:
+      await message.channel.send(f'以下のメンバーは登録されていません。再確認をお願いします。\n{unknown_memebers}')
 
 
 

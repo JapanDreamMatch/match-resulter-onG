@@ -2,13 +2,16 @@
 
 from google.cloud import vision
 from google.oauth2 import service_account
+from dotenv import load_dotenv
+import os
 
 class VisionOCR:
   def __init__(self, image_url, credentials_json):
     self.image_url = image_url
     self.credentials_json = credentials_json
     # self.ocr_text = self.perform_ocr(credentials_json) # 本番ではここで読み取り
-    with open('../testData/testOCR.txt', 'r') as file:
+    load_dotenv()
+    with open(os.getenv('TEST_TEXT_PATH'), 'r', encoding='utf-8') as file:
       self.ocr_text = file.read()
 
   def perform_ocr(self, credentials_json):
