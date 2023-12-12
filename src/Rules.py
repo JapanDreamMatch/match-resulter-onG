@@ -9,9 +9,9 @@ class Rules:
     self.countrys = workbook.worksheet("country").col_values(1)
     self.rules = [Rule(row[0], self.countrys) for row in workbook.worksheet("rules").get_all_values()]
 
-  def is_confirmed(self, ship):
+  def is_confirmed(self, ship_name:str, wows_ships:list):
     for rule in self.rules:
-      if rule.is_confirmed(ship):
+      if rule.is_confirmed(wows_ships.get_ship(ship_name)):
         return True
 
 class Rule:
@@ -52,6 +52,9 @@ class Rule:
       self.restricted_ships.pop()
 
   def is_confirmed(self, ship: Ship):
+    if ship is None:
+      return False
+
     if ship.banned:
       return False
 

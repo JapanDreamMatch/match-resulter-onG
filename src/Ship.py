@@ -22,6 +22,11 @@ class Ship:
   def is_name(self, name):
     return name in self.names
   
-  def is_names(self, names):
-    names = [name.upper() if name.isascii() else name for name in names]
-    return any(name in self.names for name in names)
+  def is_names(self, search_name):
+    self_upper_names = []
+    for name in self.names:
+      print("search_name: " + str(search_name))
+      self_upper_names.append(name.upper() if name.isascii() else name)
+    print("upper_names: " + str(self_upper_names))
+
+    return any(search_name in self_upper_names)

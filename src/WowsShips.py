@@ -27,7 +27,6 @@ class WowsShips:
 
   def ship_name_list(self):
     all_ship_names = [name.upper() for ship in self.ships for name in ship.names]
-    print(all_ship_names)
     return all_ship_names
 
   # shipsの中から、unture_ship_namesに含まれる艦艇名を検出して返す
@@ -35,7 +34,13 @@ class WowsShips:
     result_ship_names = []
     for uship in unture_ship_names:
       result_ship_name = extractOne(uship, self.ship_name_list())[0]
-      print(f"{uship} -> {result_ship_name}")
       result_ship_names.append(result_ship_name)
 
     return result_ship_names
+  
+  def get_ship(self, name):
+    for ship in self.ships:
+      #print("name: " + name + ", is_name(): " + str(ship.is_name(name)) + ", ship.names: " + str(ship.names))
+      if ship.is_name(name):
+        return ship
+    return None

@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import discord
 from Ready import Ready #VisionOCR使いすぎないための措置
 import asyncio
+import WowsShips
 
 # .envファイルから環境変数をロード
 load_dotenv()
@@ -23,6 +24,7 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 awaiting = []
+wows_ships = WowsShips.WowsShips(GOOGLE_CREDENTIALS_JSON, SHIPS_SHEET_URL)
 
 @client.event
 async def on_ready():
@@ -63,11 +65,15 @@ async def on_message(message):
   # 画像が添付されているか確認
   if any(attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')) for attachment in message.attachments):
     # Readyクラスのインスタンスを作成
-    ready_info = Ready(message.attachments[0].url, GOOGLE_CREDENTIALS_JSON, MEMBER_SPREADSHEET_URL, SHIPS_SHEET_URL)
+    ready_info = Ready(message.attachments[0].url, 
+                        GOOGLE_CREDENTIALS_JSON, 
+                        MEMBER_SPREADSHEET_URL, 
+                        wows_ships
+                      )
     
     # メンバーリストと艦艇リストを整形してメッセージとして送信
     member_list = '\n'.join(ready_info.ocr_members)
-    ship_list = '\n'.join(ready_info.ocr_ships)
+    ship_list = '\n'.join(ready_info.ocr_ships_name)
     confirmation_message = str(f"メンバーリスト:\n{member_list}\n\n艦艇リスト:\n{ship_list}\n\nこのリストを修正してください。修正が完了したら、'修正完了'と返信してください。"
       + "\n修正する場合は内容をコピー&ペーストして内容を修正してください。\n1分経過で自動承認とします。")
     
@@ -77,7 +83,7 @@ async def on_message(message):
     
     # ユーザーからの応答を待つ
     def check(m):
-      return m.author == message.author and m.content == '修正完了'
+      return m.author == message.author and (m.content == '修正完了' or '艦艇リスト:' in m.content)
     
     try:
       # ユーザーからの応答を待つ（タイムアウトは60秒）
@@ -86,9 +92,9 @@ async def on_message(message):
       # ユーザーの応答に基づいて処理
       if user_response.content == '修正完了':
         await confirmation_msg.reply('リストが承認されました。')
-      elif user_response.content in '艦艇リスト:':
+      elif '艦艇リスト:' in user_response.content:
         await confirmation_msg.reply('修正されました。')
-        # 修正されたメンバーリストと艦艇リストを取得
+      # 修正されたメンバーリストと艦艇リストを取得
       else:
         await confirmation_msg.reply('リストの修正が中止されました。')
         return

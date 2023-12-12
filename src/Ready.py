@@ -4,19 +4,18 @@ from VisionOCR import VisionOCR
 import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import WowsShips
 import Rules
 
 class Ready(VisionOCR):
-  def __init__(self, image_url, credentials_json, member_sheet_url, ships_sheet_url):
+  def __init__(self, image_url, credentials_json, member_sheet_url, wows_ships):
     super().__init__(image_url, credentials_json)
     self.member_sheet_url = member_sheet_url
     self.ocr_members = []
     self.team_members = []
-    self.ocr_ships = []
+    self.ocr_ships_name = []
     self.team_name = ''
     self.book = None
-    self.wows_ships = WowsShips.WowsShips(credentials_json, ships_sheet_url)
+    self.wows_ships = wows_ships
     self.rules = Rules.Rules(self.wows_ships.book)
     self.detect_member()
     self.detect_ship()
@@ -31,7 +30,7 @@ class Ready(VisionOCR):
     lines = [line.replace('VIX ', '').replace('X ', '') for line in lines]
     
     # 結果をshipsへ格納
-    self.ocr_ships = self.wows_ships.detect_ships(lines)
+    self.ocr_ships_name = self.wows_ships.detect_ships(lines)
 
 
 
@@ -112,8 +111,8 @@ class Ready(VisionOCR):
   # 艦艇がルールに沿っているか検証、不適切な艦艇を返す
   def ships_participation(self):
     unknown_ships = []
-    for ship in self.ocr_ships:
-      if not self.rules.is_confirmed(ship):
+    for ship in self.ocr_ships_name:
+      if not self.rules.is_confirmed(ship, self.wows_ships):
         unknown_ships.append(ship)
     return unknown_ships
 
@@ -121,4 +120,4 @@ class Ready(VisionOCR):
     # メンバーリストの名前を抽出し、リストに格納
     self.ocr_members = [name.strip() for name in reply_text.split("艦艇リスト:")[0].split("メンバーリスト:")[1].split("\n") if name.strip()]
     # 艦艇リストの名前を抽出し、リストに格納
-    self.ocr_ships = [name.strip() for name in reply_text.split("艦艇リスト:")[1].split("\n") if name.strip()]
+    self.ocr_ships_name = [name.strip() for name in reply_text.split("艦艇リスト:")[1].split("\n") if name.strip()]
