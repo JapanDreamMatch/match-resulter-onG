@@ -5,6 +5,7 @@ import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import Rules
+from rapidfuzz.process import extractOne
 
 class Ready(VisionOCR):
   def __init__(self, image_url, credentials_json, member_sheet_url, wows_ships):
@@ -75,18 +76,35 @@ class Ready(VisionOCR):
     self.team_name = best_team
 
     # 出場した選手の「...」を補正
-    for name in self.book.worksheet(self.team_name).col_values(1):
-      for ocr_member in ocr_members:
-        if ocr_member.replace(".", "") in name:
-          ocr_members.append(name)
-          ocr_members.remove(ocr_member)
+#    for name in self.book.worksheet(self.team_name).col_values(1):
+#      for ocr_member in ocr_members:
+#        if ocr_member.replace(".", "") in name:
+#          ocr_members.append(name)
+#          ocr_members.remove(ocr_member)
+    true_player_names = self.book.worksheet(self.team_name).col_values(1)
+    operators = self.book.worksheet('RoomOperator').col_values(1)
+    true_members = []
+    for untrue_name in ocr_members:
+      true_member = extractOne(untrue_name, true_player_names)
+      if(float(true_member[1]) > 60):
+        true_members.append(true_member[0])
+        continue
+      
+      operator = extractOne(untrue_name, operators)
+      if(float(operator[1]) > 60):
+        true_members.append(operator[0])
+        continue
+
+      true_members.append(untrue_name)
+
 
     # 運営メンバーを除く
     for op in self.book.worksheet('RoomOperator').col_values(1):
-      if op in ocr_members:
+      if op in true_members:
         ocr_members.remove(op)
 
     self.ocr_members = ocr_members
+
 
 
 

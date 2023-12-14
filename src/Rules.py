@@ -97,7 +97,6 @@ class Rule:
         return None
 
     # 艦名で制限
-    print("shipname: " + ship.names[0] + ", restricted_ships:" + str(self.restricted_ships))
     if self.restricted_ships and ship.is_names(self.restricted_ships):
       if self.shipCount >= self.restricted_limit:
         return "艦名制限" + str(self.restricted_ships) + "が制限数 " + str(self.restricted_limit) + " を超えています。"

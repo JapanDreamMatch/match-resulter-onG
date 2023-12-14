@@ -95,7 +95,7 @@ async def on_message(message):
       elif '艦艇リスト:' in user_response.content:
         # 修正されたメンバーリストと艦艇リストを取得
         ready_info.detect_from_reply(user_response.content)
-        confirmation_message = str(f"メンバーリスト:\n{member_list}\n\n艦艇リスト:\n{ship_list}\n\nこのリストを修正してください。修正が完了したら、'修正完了'と返信してください。"
+        confirmation_message = str(f"メンバーリスト:\n{discord.utils.escape_markdown(str(member_list))}\n\n艦艇リスト:\n{ship_list}\n\nこのリストを修正してください。修正が完了したら、'修正完了'と返信してください。"
       + "\n修正する場合は内容をコピー&ペーストして内容を修正してください。\n1分経過で自動承認とします。")
         await confirmation_msg.reply('修正されました。spreadsheetに記入します。')
       else:
@@ -104,6 +104,7 @@ async def on_message(message):
 
     except asyncio.TimeoutError:
       await confirmation_msg.reply('タイムアウトしましたので自動承認とします。')
+      user_response = confirmation_msg
 
     awaiting.remove(message.author)
 
@@ -112,7 +113,7 @@ async def on_message(message):
     unknown_ships = ready_info.ships_participation()
     await user_response.reply(f'選手を記録しました。')
     if unknown_memebers:
-      await message.channel.send(f'以下のメンバーは登録されていません。再確認をお願いします。\n{unknown_memebers}')
+      await message.channel.send(f'以下のメンバーは登録されていません。再確認をお願いします。\n{discord.utils.escape_markdown(str(unknown_memebers))}')
     if unknown_ships:
       reasons = ""
       for unknown_ship in unknown_ships:
