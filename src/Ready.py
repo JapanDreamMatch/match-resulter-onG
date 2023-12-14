@@ -108,16 +108,17 @@ class Ready(VisionOCR):
     return unknown_members
   
 
-  # 艦艇がルールに沿っているか検証、不適切な艦艇を返す
+  # 艦艇がルールに沿っているか検証、不適切な艦艇の理由を返す
   def ships_participation(self):
     unknown_ships = []
-    for ship in self.ocr_ships_name:
-      if not self.rules.is_confirmed(ship, self.wows_ships):
-        unknown_ships.append(ship)
+    for ship_name in self.ocr_ships_name:
+      reason = self.rules.is_confirmed(ship_name, self.wows_ships)
+      if not reason is None:
+        unknown_ships.append(ship_name + "は"+ reason)
     return unknown_ships
 
   def detect_from_reply(self, reply_text):
     # メンバーリストの名前を抽出し、リストに格納
-    self.ocr_members = [name.strip() for name in reply_text.split("艦艇リスト:")[0].split("メンバーリスト:")[1].split("\n") if name.strip()]
+    self.ocr_members = [name.strip() for name in reply_text.split("艦艇リスト:")[0].replace("メンバーリスト:\n", "").split("\n") if name.strip()]
     # 艦艇リストの名前を抽出し、リストに格納
-    self.ocr_ships_name = [name.strip() for name in reply_text.split("艦艇リスト:")[1].split("\n") if name.strip()]
+    self.ocr_ships_name = self.wows_ships.detect_ships([name.strip() for name in reply_text.split("艦艇リスト:")[1].split("\n") if name.strip()])

@@ -33,14 +33,13 @@ class WowsShips:
   def detect_ships(self, unture_ship_names):
     result_ship_names = []
     for uship in unture_ship_names:
-      result_ship_name = extractOne(uship, self.ship_name_list())[0]
+      result_ship_name = extractOne(uship.upper(), self.ship_name_list())[0]
       result_ship_names.append(result_ship_name)
 
     return result_ship_names
   
   def get_ship(self, name):
     for ship in self.ships:
-      #print("name: " + name + ", is_name(): " + str(ship.is_name(name)) + ", ship.names: " + str(ship.names))
       if ship.is_name(name):
         return ship
     return None

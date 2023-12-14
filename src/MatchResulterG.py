@@ -93,8 +93,11 @@ async def on_message(message):
       if user_response.content == '修正完了':
         await confirmation_msg.reply('リストが承認されました。')
       elif '艦艇リスト:' in user_response.content:
-        await confirmation_msg.reply('修正されました。')
-      # 修正されたメンバーリストと艦艇リストを取得
+        # 修正されたメンバーリストと艦艇リストを取得
+        ready_info.detect_from_reply(user_response.content)
+        confirmation_message = str(f"メンバーリスト:\n{member_list}\n\n艦艇リスト:\n{ship_list}\n\nこのリストを修正してください。修正が完了したら、'修正完了'と返信してください。"
+      + "\n修正する場合は内容をコピー&ペーストして内容を修正してください。\n1分経過で自動承認とします。")
+        await confirmation_msg.reply('修正されました。spreadsheetに記入します。')
       else:
         await confirmation_msg.reply('リストの修正が中止されました。')
         return
@@ -111,7 +114,10 @@ async def on_message(message):
     if unknown_memebers:
       await message.channel.send(f'以下のメンバーは登録されていません。再確認をお願いします。\n{unknown_memebers}')
     if unknown_ships:
-      await user_response.reply(f'以下の艦艇は登録されていません。再確認をお願いします。\n{unknown_ships}')
+      reasons = ""
+      for unknown_ship in unknown_ships:
+        reasons += unknown_ship + "\n"
+      await user_response.reply(f'以下の艦艇は登録されていません。再確認をお願いします。\n' + reasons)
 
 
 
