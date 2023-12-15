@@ -86,7 +86,7 @@ class Ready(VisionOCR):
     true_members = []
     for untrue_name in ocr_members:
       true_member = extractOne(untrue_name, true_player_names)
-      if(float(true_member[1]) > 60):
+      if float(true_member[1] > 60):
         true_members.append(true_member[0])
         continue
       
@@ -101,9 +101,9 @@ class Ready(VisionOCR):
     # 運営メンバーを除く
     for op in self.book.worksheet('RoomOperator').col_values(1):
       if op in true_members:
-        ocr_members.remove(op)
+        true_members.remove(op)
 
-    self.ocr_members = ocr_members
+    self.ocr_members = true_members
 
 
 
