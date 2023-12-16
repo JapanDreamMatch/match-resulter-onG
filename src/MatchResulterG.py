@@ -41,16 +41,8 @@ async def on_message(message):
   # ボット自身のメッセージは無視
   if message.author == client.user:
     return
-
-  # CHANNEL_IDのチャンネル以外、または添付ファイルがない場合は処理をスキップ
-  if message.channel.id != CHANNEL_ID or len(message.attachments) <= 0:
-    return
   
-  # 承認待ちの場合は処理をスキップ
-  if message.author in awaiting:
-    return
-  
-  # 承認待ちをリセット
+    # 承認待ちをリセット
   if message.content == '!matchresulter flush':
     awaiting.clear()
     await message.channel.send('承認待ちをリセットしました。')
@@ -58,8 +50,16 @@ async def on_message(message):
   
   # debug用
   if message.content == '!matchresulter debug':
-    msg = ""
+    msg = "hi"
     await message.channel.send(msg)
+    return
+
+  # CHANNEL_IDのチャンネル以外、または添付ファイルがない場合は処理をスキップ
+  if message.channel.id != CHANNEL_ID or len(message.attachments) <= 0:
+    return
+  
+  # 承認待ちの場合は処理をスキップ
+  if message.author in awaiting:
     return
 
   # 画像が添付されているか確認
@@ -113,7 +113,7 @@ async def on_message(message):
     unknown_ships = ready_info.ships_participation()
     await user_response.reply(f'選手を記録しました。')
     if unknown_memebers:
-      await message.channel.send(f'以下のメンバーは登録されていません。再確認をお願いします。\n{discord.utils.escape_markdown(str(unknown_memebers))}')
+      await user_response.reply(f'以下のメンバーは登録されていません。再確認をお願いします。\n{discord.utils.escape_markdown(str(unknown_memebers))}')
     if unknown_ships:
       reasons = ""
       for unknown_ship in unknown_ships:
