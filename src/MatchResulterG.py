@@ -50,7 +50,7 @@ async def on_message(message):
   
   # debug用
   if message.content == '!matchresulter debug':
-    msg = ""
+    msg = "hi"
     await message.channel.send(msg)
     return
 
@@ -113,7 +113,7 @@ async def on_message(message):
     unknown_ships = ready_info.ships_participation()
     await user_response.reply(f'選手を記録しました。')
     if unknown_memebers:
-      await message.channel.send(f'以下のメンバーは登録されていません。再確認をお願いします。\n{discord.utils.escape_markdown(str(unknown_memebers))}')
+      await user_response.reply(f'以下のメンバーは登録されていません。再確認をお願いします。\n{discord.utils.escape_markdown(str(unknown_memebers))}')
     if unknown_ships:
       reasons = ""
       for unknown_ship in unknown_ships:
